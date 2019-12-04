@@ -2,8 +2,11 @@ const express = require("express");
 const helmet = require("helmet");
 
 const postsRouter = require("../posts/postRouter");
+const usersRouter = require("../users/userRouter");
 
 const server = express();
+
+
 
 //MIDDLEWARE
 
@@ -15,17 +18,6 @@ function logger(req, res, next) {
   next(); //allows continuation
 }
 
-const validateUserId = id => {
-  return function(req, res, next) {
-    if (id && id === req.headers.id) {
-      req.user = id;
-      console.log(req.user);
-      next();
-    } else {
-      res.status(400).json({ message: "invalid user id" });
-    }
-  };
-};
 
 const validateUser = () => {
   return function(req, res, next) {
@@ -53,25 +45,6 @@ const validatePost = () => {
   };
 };
 
-// function gatekeeper(req, res, next) {
-//   console.log(`${req.headers}`);
-
-//   if (req.headers.password === "mellon") {
-//     next();
-//   } else {
-//     res.status(401).json({ error: "Wrong password" });
-//   }
-// }
-
-// const checkRole = role => {
-//   return function(req, res, next) {
-//     if (role && role === req.headers.role) {
-//       next();
-//     } else {
-//       res.status(403).json({ error: "wrong role" });
-//     }
-//   };
-// };
 
 server.use(helmet());
 server.use(express.json());
@@ -79,6 +52,7 @@ server.use(logger);
 
 //ENDPOINTS
 server.use("/api/posts", helmet(), postsRouter);
+server.use("/api/users", helmet(), usersRouter);
 
 server.get("/", (req, res) => {
   const nameInsert = req.name ? `${req.name}` : "World";
@@ -89,9 +63,6 @@ server.get("/", (req, res) => {
     `);
 });
 
-server.get("/echo", (req, res) => {
-  res.send(req.headers);
-});
 
 server.get("/area51", helmet(), validatePost(), (req, res) => {
   res.send(req.headers);
