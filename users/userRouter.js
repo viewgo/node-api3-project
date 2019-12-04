@@ -1,16 +1,23 @@
 const express = require("express");
 const users = require("./userDb");
+const posts = require("../posts/postDb");
 
 const router = express.Router();
 
 router.use(express.json());
 
-router.post("/", (req, res) => {
-  const body = req.body;
+router.post("/", validateUser, (req, res) => {
+  users.insert(req.body).then(user => {
+    res.status(201).json(user);
+  });
 });
 
-router.post("/:id/posts", validatePost, (req, res) => {
-  // do your magic!
+router.post("/:id/posts", validateUserId, validatePost, (req, res) => {
+  const newBody = { ...req.body, user_id: req.params.id };
+
+  posts.insert(newBody).then(post => {
+    res.status(201).json(post);
+  });
 });
 
 router.get("/", (req, res) => {
@@ -28,48 +35,27 @@ router.get("/", (req, res) => {
 });
 
 router.get("/:id", validateUserId, (req, res) => {
-  users
-  .getById(req.params.id)
-    .then(user => {
-      res.status(200).json(user);
-      })
-    
+  users.getById(req.params.id).then(user => {
+    res.status(200).json(user);
+  });
 });
 
-router.get("/:id/posts", (req, res) => {
-  users
-    .getUserPosts(req.params.id)
-    .then(posts => {
-      if (posts.length > 0) {
-        res.status(200).json(posts);
-      } else {
-        res
-          .status(404)
-          .json({ message: "The user with the specified ID does not exist." });
-      }
-    })
-    .catch(err => {
-      console.log("error on GET /users/:id/posts", err);
-      res
-        .status(500)
-        .json({ error: "The posts information could not be retrieved." });
-    });
+router.get("/:id/posts", validateUserId, (req, res) => {
+  users.getUserPosts(req.params.id).then(posts => {
+    res.status(200).json(posts);
+  });
 });
 
-router.delete("/:id", (req, res) => {
-  users
-    .remove(req.params.id)
-    .then(response => {
-      res.status(200).json({ message: "User deleted successfully" });
-    })
-    .catch(err => {
-      console.log("error on DELETE /users/:id", err);
-      res.status(500).json({ error: "The user could not be removed" });
-    });
+router.delete("/:id", validateUserId, (req, res) => {
+  users.remove(req.params.id).then(response => {
+    res.status(200).json({ message: "User deleted successfully" });
+  });
 });
 
-router.put("/:id", (req, res) => {
-  // do your magic!
+router.put("/:id", validateUserId, validateUser, (req, res) => {
+  users.update(req.params.id, req.body).then(post => {
+    res.status(200).json(post);
+  });
 });
 
 //custom middleware
